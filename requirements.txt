@@ -6,3 +6,4 @@ pandas-datareader
 prophet
 plotly.express
 format_datetime
+babel
