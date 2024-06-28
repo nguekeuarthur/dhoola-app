@@ -1,0 +1,3 @@
+﻿code_promo,isActive,nbreFinalTransaction,date_debut,id,pourcentage_reduction,addTime,updateTime,date_fin
+njoh,True,150,1716069600000,njoh,100,2024-05-18T14:15:07.776416,2024-05-18T14:15:07.776443,1719698400000
+test@,False,1,1714410622658,test@,100,2024-04-29T19:11:55.196994,2024-04-29T19:24:15.930082,1714600800000
