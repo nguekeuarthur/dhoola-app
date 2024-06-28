@@ -90,24 +90,24 @@ st.title("Tableau de bord de l'Application")
 total1, total2, total3, total4, total5 = st.columns(5, gap='large')
 
 with total1:
-    st.success("Total User")
-    st.metric(label="Total Users", value=f"{total_users:,.0f}")
+    st.success("Utilisateurs")
+    st.metric(label="Total Utilisateur", value=f"{total_users:,.0f}")
 
 with total2:
     st.info("Nombre Utilisateur Actif")
-    st.metric(label="Active Users", value=f"{active_users:,.0f}")
+    st.metric(label="Utilisateur Actif", value=f"{active_users:,.0f}")
 
 with total3:
     st.info("Jours Actifs")
-    st.metric(label="Active Days", value=f"{days_active:,.0f}")
+    st.metric(label="Jour Actif", value=f"{days_active:,.0f}")
 
 with total4:
-    st.info("Inscription User")
-    st.metric(label="New Users Today", value=f"{new_users:,.0f}")
+    st.info("Utilisateur Inscrit")
+    st.metric(label="Utilisateur journalier", value=f"{new_users:,.0f}")
 
 with total5:
-    st.info("Countries")
-    st.metric(label="Countries", value=countries)
+    st.info("Pays")
+    st.metric(label="Pays", value=countries)
 
 # Additional Charts
 st.plotly_chart(fig_map, use_container_width=True)
