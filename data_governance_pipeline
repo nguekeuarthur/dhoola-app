@@ -1,0 +1,14 @@
+// Data Governance Pipeline
+digraph {
+	A [label="Firebase
+(Collecte de données)"]
+	B [label="Datawarehouse
+(Stockage centralisé)"]
+	C [label="VSCode
+(Traitement & Transformation des données avec Python)"]
+	D [label="Streamlit
+(Visualisation des données)"]
+	A -> B
+	B -> C
+	C -> D
+}

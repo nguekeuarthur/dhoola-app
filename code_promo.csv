@@ -1,3 +1,3 @@
-﻿code_promo,isActive,nbreFinalTransaction,date_debut,id,pourcentage_reduction,addTime,updateTime,date_fin
-njoh,True,150,1716069600000,njoh,100,2024-05-18T14:15:07.776416,2024-05-18T14:15:07.776443,1719698400000
-test@,False,1,1714410622658,test@,100,2024-04-29T19:11:55.196994,2024-04-29T19:24:15.930082,1714600800000
+﻿nbreFinalTransaction,updateTime,addTime,date_debut,isActive,date_fin,pourcentage_reduction,code_promo
+200,2024-07-22T16:52:50.391912,2024-07-22T16:52:50.391882,1721685600000,True,1727647200000,100,back2school
+150,2024-06-27T17:36:24.589439,2024-05-18T14:15:07.776416,1716069600000,True,1722376800000,100,njoh
