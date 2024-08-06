@@ -114,5 +114,5 @@ st.plotly_chart(fig_map, use_container_width=True)
 st.plotly_chart(fig_bar, use_container_width=True)
 st.plotly_chart(fig_active_users_bar, use_container_width=True)
 
-st.header("Utilisateur par genre")
-st.plotly_chart(fig_pie, use_container_width=True)
+# st.header("Utilisateur par genre")
+# st.plotly_chart(fig_pie, use_container_width=True)
