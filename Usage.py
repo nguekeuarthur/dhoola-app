@@ -178,3 +178,72 @@ fig6 = px.bar(most_active_prestataires_names_filtered,
 # Mettre à jour la disposition pour améliorer la lisibilité
 fig6.update_layout(xaxis_title='Nombre de Transactions', yaxis_title='Entreprise')
 st.plotly_chart(fig6)
+# Fonction de génération de rapport
+def generate_report():
+    if len(date_range) == 2:
+        start_date, end_date = date_range[0], date_range[1]
+        date_info = f"- Plage de dates: {start_date} - {end_date}"
+    else:
+        date_info = "Toutes les dates disponibles."
+
+    country_info = f"- Pays sélectionnés: {', '.join(selected_country)}" if selected_country else "Tous les pays."
+    device_info = f"- Type d'appareil: {', '.join(selected_device_type)}" if selected_device_type else "Tous les types d'appareils."
+
+    # Formatage des distributions
+    user_country_distribution_str = user_country_distribution.to_frame().reset_index().rename(columns={'index': 'Pays', 'country': 'Utilisateurs'}).to_markdown(index=False)
+    user_device_distribution_str = user_device_distribution.to_frame().reset_index().rename(columns={'index': 'Appareil', 'isAndroid': 'Utilisateurs'}).to_markdown(index=False)
+    most_active_users_names_filtered_str = most_active_users_names_filtered.to_markdown(index=False)
+    pages_df_filtered_str = pages_df_filtered.to_markdown(index=False)
+    most_active_prestataires_names_filtered_str = most_active_prestataires_names_filtered.to_markdown(index=False)
+
+    report = f"""
+    ## Rapport Automatique
+
+    **Période d'analyse:**
+    {date_info}
+
+    **Filtres appliqués:**
+    {country_info}
+    {device_info}
+    
+    **Métriques Clés:**
+
+    ### Durée Moyenne des Sessions
+    Les sessions durent en moyenne **{average_session_duration_minutes:.2f} minutes**, ce qui montre un bon niveau d'engagement par session.
+
+    ### Utilisateurs par Pays
+    Voici une vue d'ensemble des utilisateurs par pays :
+    
+    {user_country_distribution_str}
+
+    ### Utilisateurs par Type d'Appareil
+    La répartition des utilisateurs par type d'appareil est la suivante :
+    
+    {user_device_distribution_str}
+
+    ### Utilisateurs Actifs
+    Les utilisateurs les plus actifs sont :
+    
+    {most_active_users_names_filtered_str}
+
+    ### Pages les Plus Visitées
+    Les pages les plus visitées sont :
+    
+    {pages_df_filtered_str}
+
+    ### Prestataires les Plus Actifs
+    Les prestataires les plus actifs sont :
+    
+    {most_active_prestataires_names_filtered_str}
+
+    Ce rapport fournit une vue d'ensemble détaillée de l'engagement et de la fidélité des utilisateurs de l'application Dhoola. En observant les métriques d'activité, les décideurs peuvent identifier les points forts et les opportunités d'amélioration pour augmenter l'engagement et la satisfaction des utilisateurs.
+    """
+    return report
+
+# Bouton pour générer le rapport
+if st.button('Générer le Rapport'):
+    if selected_country or selected_device_type or date_range:
+        report = generate_report()
+        st.markdown(report)
+    else:
+        st.markdown("Veuillez sélectionner des filtres pour générer un rapport.")
