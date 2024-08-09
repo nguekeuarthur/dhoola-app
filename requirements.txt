@@ -7,3 +7,4 @@ prophet
 plotly.express
 babel
 fpdf
+kaleido
