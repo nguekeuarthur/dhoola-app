@@ -1,118 +1,110 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-from babel.dates import format_datetime
+import plotly.graph_objects as go
+import ast
 
-# Chargement des données CSV
-users_df = pd.read_csv('users.csv')
-app_opened_time_df = pd.read_csv('appOpenedTime.csv')
-sessions_df = pd.read_csv('sessions_with_pages_true.csv')
+# Charger les données
+users = pd.read_csv('users.csv')
+sessions = pd.read_csv('sessions_with_pages_true.csv')
 
-# Conversion des colonnes de temps en datetime
-app_opened_time_df['time'] = pd.to_datetime(app_opened_time_df['time'])
-sessions_df['session_start'] = pd.to_datetime(sessions_df['session_start'])
-sessions_df['session_end'] = pd.to_datetime(sessions_df['session_end'])
-users_df['creationTime'] = pd.to_datetime(users_df['creationTime'])
+# Convertir les colonnes de date en datetime si nécessaire
+if 'creationTime' in users.columns:
+    users['creationTime'] = pd.to_datetime(users['creationTime'], errors='coerce')
 
-# Ajout d'un sélecteur de date pour filtrer les données
-st.sidebar.header("Filtre de date")
-start_date = st.sidebar.date_input("Date de début", value=pd.to_datetime('2023-01-01'))
-end_date = st.sidebar.date_input("Date de fin", value=pd.to_datetime('today'))
+if 'session_start' in sessions.columns:
+    sessions['session_start'] = pd.to_datetime(sessions['session_start'], errors='coerce')
+if 'session_end' in sessions.columns:
+    sessions['session_end'] = pd.to_datetime(sessions['session_end'], errors='coerce')
 
-# Filtrage des données en fonction de la plage de dates sélectionnée
-filtered_users_df = users_df[(users_df['creationTime'] >= pd.to_datetime(start_date)) & (users_df['creationTime'] <= pd.to_datetime(end_date))]
-filtered_app_opened_time_df = app_opened_time_df[(app_opened_time_df['time'] >= pd.to_datetime(start_date)) & (app_opened_time_df['time'] <= pd.to_datetime(end_date))]
-filtered_sessions_df = sessions_df[(sessions_df['session_start'] >= pd.to_datetime(start_date)) & (sessions_df['session_end'] <= pd.to_datetime(end_date))]
+# Calcul des statistiques générales
+nombre_de_sessions = len(sessions)
+nombre_total_utilisateurs = len(users)
+taux_retention = (nombre_de_sessions / nombre_total_utilisateurs) * 100 if nombre_total_utilisateurs > 0 else 0
+nombre_pages_par_session = sessions['visited_pages'].apply(lambda x: len(ast.literal_eval(x))).mean()
+temps_ecoule_moyen = sessions['session_duration_in_seconds'].sum() / 60  # Convertir en minutes
+taux_conversion = (sessions['conversion'].sum() / nombre_total_utilisateurs) * 100 if 'conversion' in sessions.columns else 0
 
-# Calcul des statistiques nécessaires sur les données filtrées
-total_users = len(filtered_users_df)
-active_users = len(filtered_users_df[filtered_users_df['status'] == 'active'])
+# Remplace "Nombre de Likes par Session" par "Nombre de Favoris par Session"
+nombre_favoris_par_session = sessions['favorites'].mean() if 'favorites' in sessions.columns else 0
 
-# Calculer les jours actifs en comptant les jours uniques où l'application a été ouverte
-days_active = len(filtered_app_opened_time_df['time'].dt.date.unique())
+# Affichage des statistiques générales
+st.title('Tableau de Bord Centralisé - Application Dhoola')
 
-new_users = len(filtered_users_df[pd.to_datetime(filtered_users_df['creationTime']).dt.date == pd.to_datetime('today').date()])
-countries = filtered_users_df['country'].nunique()
-users_by_gender = filtered_users_df['gender'].value_counts().reset_index()
-users_by_gender.columns = ['gender', 'count']
+st.subheader('Statistiques Générales')
+col1, col2, col3 = st.columns(3)
+with col1:
+    st.metric("Nombre de Sessions", nombre_de_sessions)
+    st.metric("Nombre de Favoris par Session", f"{nombre_favoris_par_session:.2f}")
+with col2:
+    st.metric("Nombre Total d'Utilisateurs", nombre_total_utilisateurs)
+    st.metric("Taux de Conversion (%)", f"{taux_conversion:.2f}")
+with col3:
+    st.metric("Taux de Rétention (%)", f"{taux_retention:.2f}")
+    st.metric("Temps Écoulé Moyen (minutes)", f"{temps_ecoule_moyen:.2f}")
 
-# Préparation des données pour la carte et le graphique à barres
-country_counts = filtered_users_df['country'].value_counts().reset_index()
-country_counts.columns = ['country', 'count']
+col4, col5 = st.columns(2)
+with col4:
+    st.metric("Nombre de Pages par Session", f"{nombre_pages_par_session:.2f}")
 
-# Création de la carte avec Plotly
-fig_map = px.choropleth(country_counts,
-                        locations="country",
-                        locationmode="country names",
-                        color="count",
-                        hover_name="country",
-                        color_continuous_scale=px.colors.sequential.Plasma,
-                        title="Utilisateurs par pays")
+# 1. Répartition Géographique Globale (de Maps.py)
+st.subheader('Répartition Géographique Globale')
+if 'country' in users.columns:
+    user_country_density = users['country'].value_counts().reset_index()
+    user_country_density.columns = ['country', 'count']
+    
+    fig_continent = px.choropleth(user_country_density, locations='country', locationmode='country names',
+                                  color='count', hover_name='country', hover_data=['count'], 
+                                  title='Utilisateurs par Pays et Continent', projection='natural earth')
+    fig_continent.update_geos(showcoastlines=True, coastlinecolor="Black", showland=True, landcolor="LightGray",
+                              showocean=True, oceancolor="LightBlue")
+    st.plotly_chart(fig_continent, use_container_width=True)
+else:
+    st.warning("La colonne 'country' n'est pas présente dans le DataFrame `users`.")
 
-# Utilisation de Babel pour obtenir le nom des jours en français
-def get_day_name(date, locale='fr_FR'):
-    return format_datetime(date, 'EEEE', locale=locale)
+# 2. Pages les Plus Visitées (de Engagement.py)
+st.subheader('Pages les Plus Visitées')
+visited_pages = sessions['visited_pages'].apply(lambda x: ast.literal_eval(x))
+all_visited_pages = [page for sublist in visited_pages for page in sublist]
+page_counts = pd.Series(all_visited_pages).value_counts().reset_index()
+page_counts.columns = ['Page', 'Visites']
 
-# Appliquer la fonction pour obtenir les noms de jours
-filtered_app_opened_time_df['day_of_week'] = filtered_app_opened_time_df['time'].apply(get_day_name)
+fig_pages = px.bar(page_counts, x='Visites', y='Page', orientation='h', title='Pages les Plus Visitées')
+st.plotly_chart(fig_pages, use_container_width=True)
 
-# Préparation des données pour le graphique à barres des utilisateurs actifs par jour de la semaine
-active_users_by_day = filtered_app_opened_time_df['day_of_week'].value_counts().reindex([
-    'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'
-]).reset_index()
-active_users_by_day.columns = ['day', 'count']
+# 3. Nombre d'Utilisateurs Actifs par Jour de la Semaine (de Maps.py)
+st.subheader('Nombre d\'Utilisateurs Actifs par Jour de la Semaine')
+if 'session_start' in sessions.columns:
+    sessions['day_of_week'] = sessions['session_start'].dt.day_name()
+    active_users_per_day = sessions.groupby('day_of_week').size().reindex(
+        ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']).reset_index(name='count')
+    
+    fig_users_per_day = px.bar(active_users_per_day, x='day_of_week', y='count',
+                               title='Nombre d\'Utilisateurs Actifs par Jour de la Semaine',
+                               labels={'day_of_week': 'Jour de la Semaine', 'count': 'Nombre d\'Utilisateurs'},
+                               color='day_of_week')
+    st.plotly_chart(fig_users_per_day, use_container_width=True)
+else:
+    st.warning("La colonne 'session_start' n'est pas présente dans le DataFrame `sessions`.")
 
-# Création du graphique à barres avec Plotly pour les utilisateurs actifs par jour de la semaine
-fig_active_users_bar = px.bar(active_users_by_day,
-                              x='day',
-                              y='count',
-                              title='Nombre d\'utilisateurs actifs par jour de la semaine',
-                              labels={'day': 'Jour de la semaine', 'count': 'Nombre d\'utilisateurs actifs'},
-                              color='count',
-                              color_continuous_scale=px.colors.sequential.Blues)
+# 4. Durée Moyenne des Sessions (de Engagement.py)
+# st.subheader('Durée Moyenne des Sessions')
+# if 'session_duration_in_seconds' in sessions.columns:
+#     sessions['session_duration_in_minutes'] = sessions['session_duration_in_seconds'] / 60
+#     average_session_duration = sessions['session_duration_in_minutes'].mean()
 
-# Création du graphique à barres avec Plotly pour les utilisateurs par pays
-fig_bar = px.bar(country_counts,
-                 x='country',
-                 y='count',
-                 title='Nombre d\'utilisateurs par pays',
-                 labels={'country': 'Pays', 'count': 'Nombre d\'utilisateurs'})
+#     st.metric(label="Durée Moyenne des Sessions", value=f"{average_session_duration:.2f} minutes")
+# else:
+#     st.warning("La colonne 'session_duration_in_seconds' n'est pas présente dans le DataFrame `sessions`.")
 
-# Création du graphique en camembert pour les utilisateurs par genre
-fig_pie = px.pie(users_by_gender,
-                 names='gender',
-                 values='count',
-                 title='Répartition des utilisateurs par genre')
+# 5. Répartition par Type d'Appareil (de Usage.py)
+st.subheader('Répartition par Type d\'Appareil')
+if 'isAndroid' in users.columns:
+    device_distribution = users['isAndroid'].apply(lambda x: 'Android' if x else 'iOS').value_counts().reset_index()
+    device_distribution.columns = ['Appareil', 'Nombre d\'Utilisateurs']
 
-# Affichage du tableau de bord
-st.title("Tableau de bord de l'Application")
-
-total1, total2, total3, total4, total5 = st.columns(5, gap='large')
-
-with total1:
-    st.success("Utilisateurs")
-    st.metric(label="Total Utilisateur", value=f"{total_users:,.0f}")
-
-with total2:
-    st.info("Nombre Utilisateur Actif")
-    st.metric(label="Utilisateur Actif", value=f"{active_users:,.0f}")
-
-with total3:
-    st.info("Jours Actifs")
-    st.metric(label="Jour Actif", value=f"{days_active:,.0f}")
-
-with total4:
-    st.info("Utilisateur Inscrit")
-    st.metric(label="Utilisateur journalier", value=f"{new_users:,.0f}")
-
-with total5:
-    st.info("Pays")
-    st.metric(label="Pays", value=countries)
-
-# Additional Charts
-st.plotly_chart(fig_map, use_container_width=True)
-st.plotly_chart(fig_bar, use_container_width=True)
-st.plotly_chart(fig_active_users_bar, use_container_width=True)
-
-# st.header("Utilisateur par genre")
-# st.plotly_chart(fig_pie, use_container_width=True)
+    fig_device = px.pie(device_distribution, values='Nombre d\'Utilisateurs', names='Appareil', 
+                        title='Répartition par Type d\'Appareil', hole=0.3)
+    st.plotly_chart(fig_device, use_container_width=True)
+else:
+    st.warning("La colonne 'isAndroid' n'est pas présente dans le DataFrame `users`.")
