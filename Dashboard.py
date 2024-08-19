@@ -23,29 +23,27 @@ nombre_total_utilisateurs = len(users)
 taux_retention = (nombre_de_sessions / nombre_total_utilisateurs) * 100 if nombre_total_utilisateurs > 0 else 0
 nombre_pages_par_session = sessions['visited_pages'].apply(lambda x: len(ast.literal_eval(x))).mean()
 temps_ecoule_moyen = sessions['session_duration_in_seconds'].sum() / 60  # Convertir en minutes
-taux_conversion = (sessions['conversion'].sum() / nombre_total_utilisateurs) * 100 if 'conversion' in sessions.columns else 0
+nombre_de_pays = users['country'].nunique()
 
-# Remplace "Nombre de Likes par Session" par "Nombre de Favoris par Session"
-nombre_favoris_par_session = sessions['favorites'].mean() if 'favorites' in sessions.columns else 0
-
-# Affichage des statistiques générales
+# Affichage des statistiques générales avec couleurs personnalisées
 st.title('Tableau de Bord Centralisé - Application Dhoola')
 
 st.subheader('Statistiques Générales')
 col1, col2, col3 = st.columns(3)
 with col1:
-    st.metric("Nombre de Sessions", nombre_de_sessions)
-    st.metric("Nombre de Favoris par Session", f"{nombre_favoris_par_session:.2f}")
+    st.markdown("<div style='background-color: #e0f7fa; padding: 10px; border-radius: 5px;'><strong>Nombre de Sessions</strong><br><h3>{}</h3></div>".format(nombre_de_sessions), unsafe_allow_html=True)
 with col2:
-    st.metric("Nombre Total d'Utilisateurs", nombre_total_utilisateurs)
-    st.metric("Taux de Conversion (%)", f"{taux_conversion:.2f}")
+    st.markdown("<div style='background-color: #fff3e0; padding: 10px; border-radius: 5px;'><strong>Nombre Total d'Utilisateurs</strong><br><h3>{}</h3></div>".format(nombre_total_utilisateurs), unsafe_allow_html=True)
 with col3:
-    st.metric("Taux de Rétention (%)", f"{taux_retention:.2f}")
-    st.metric("Temps Écoulé Moyen (minutes)", f"{temps_ecoule_moyen:.2f}")
+    st.markdown("<div style='background-color: #e3f2fd; padding: 10px; border-radius: 5px;'><strong>Taux de Rétention (%)</strong><br><h3>{:.2f}</h3></div>".format(taux_retention), unsafe_allow_html=True)
 
-col4, col5 = st.columns(2)
+col4, col5, col6 = st.columns(3)
 with col4:
-    st.metric("Nombre de Pages par Session", f"{nombre_pages_par_session:.2f}")
+    st.markdown("<div style='background-color: #f3e5f5; padding: 10px; border-radius: 5px;'><strong>Nombre de Pages par Session</strong><br><h3>{:.2f}</h3></div>".format(nombre_pages_par_session), unsafe_allow_html=True)
+with col5:
+    st.markdown("<div style='background-color: #e8f5e9; padding: 10px; border-radius: 5px;'><strong>Nombre de Pays</strong><br><h3>{}</h3></div>".format(nombre_de_pays), unsafe_allow_html=True)
+with col6:
+    st.markdown("<div style='background-color: #ffebee; padding: 10px; border-radius: 5px;'><strong>Temps Écoulé Moyen (minutes)</strong><br><h3>{:.2f}</h3></div>".format(temps_ecoule_moyen), unsafe_allow_html=True)
 
 # 1. Répartition Géographique Globale (de Maps.py)
 st.subheader('Répartition Géographique Globale')
